@@ -18,6 +18,7 @@
     <button onclick = "getPatient()" >get patient</button>
     <p>returned patient resource: </p>
     <p id="ptRes" ></p>
+    <button onclick = "getAge()" >get Age</button>
   </main>
   
   <footer>
@@ -26,12 +27,14 @@
   </footer>
   <script>
        //FHIR app
+      var patientResourse = {}
       function getPatient() {
           const client = FHIR.client("https://r3.smarthealthit.org");
           //alert(client)
           client.request("Patient/2e27c71e-30c8-4ceb-8c1c-5641e066c0a4").then(response => {
               //alert(JSON.stringify(response))
               document.getElementById("ptRes").innerHTML = JSON.stringify(response) ;
+              patientResourse= response;
               if (!response.ok) {
               throw new Error("HTTP error " + response.status);
               }
@@ -43,6 +46,15 @@
               .catch(error => {
               alert(error);
               });
+      }
+      
+      function getAge(){
+        // Assuming the FHIR resource is stored in a variable called "patientResource"
+        const birthDate = patientResource.birthDate;
+        const ageInMs = Date.now() - new Date(birthDate).getTime();
+        const ageInYears = ageInMs / 1000 / 60 / 60 / 24 / 365.25;
+        const age = Math.floor(ageInYears);
+        alert(age);
       }
 
   </script>
