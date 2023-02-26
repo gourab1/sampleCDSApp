@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
+    <title>sampleApp</title>
+</head>
+<body>
+  <header>
+    <h1></h1>
+  </header>
+  
+  <main>
+    <p></p>
+    
+    <button onclick = "getPatient()" >get patient</button>
+    <p>returned patient resource: </p>
+    <p id="ptRes" ></p>
+  </main>
+  
+  <footer>
+
+    
+  </footer>
+  <script>
+       //FHIR app
+      function getPatient() {
+          const client = FHIR.client("https://r3.smarthealthit.org");
+          //alert(client)
+          client.request("Patient/2e27c71e-30c8-4ceb-8c1c-5641e066c0a4").then(response => {
+              //alert(JSON.stringify(response))
+              document.getElementById("ptRes").innerHTML = JSON.stringify(response) ;
+              if (!response.ok) {
+              throw new Error("HTTP error " + response.status);
+              }
+              return response.json();
+              })
+              .then(data => {
+              //alert(data);
+              })
+              .catch(error => {
+              alert(error);
+              });
+      }
+
+  </script>
+</body>
+</html>
 
