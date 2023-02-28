@@ -9,16 +9,68 @@
 </head>
 <body>
   <header>
-    <h1></h1>
+    <h1>PRISK CDSApp</h1>
   </header>
   
   <main>
-    <p></p>
-    
-    <button onclick = "getPatient()" >get patient</button>
-    <p>returned patient resource: </p>
-    <p id="ptRes" ></p>
-    <button onclick = "getAge()" >get Age</button>
+    <div>
+        <p>The following has already happened:</p>
+        <ul>
+            <li>The EMR launched the PRISK CDSApp at start of patient encounter</li>
+            <li>The EMR and the PRISK CDSApp have established an authenticated, secure connection</li>
+            <li>The EMR has passed the current patient id to the PRISK CDSApp</li>
+        </ul>
+        <hr>
+        <p>The PRISK CDSApp now needs futher details about the patient,to determine the output that should be displayed in the EMR</p>
+        <p>Complete the following pesudocode in the PRISK CDSApp, so that this app can request this patients details from the EMR</p>
+        <div>
+            <label for="getPt">From_EMR_client_with_data_in_FHIR: Get_details_of_patient_with_id=</label>
+            <input type="text" id="getPt" name="getPt" required>
+            <button onclick = "getPatient()" >Get patient details</button>
+        <div>
+    </div>
+   
+    <div id= "getSecPtDiv" style ="display: block;">
+        <hr>
+        <label for="getSecPt">Enter second EMR server address</label>
+        <input type="text" id="getSecEmr" name="getSecEmr">
+        <label for="getSecPt">Enter patient id</label>
+        <input type="text" id="getSecPt" name="getSecPt">
+        <button onclick = "getSecPt()" >Get patient details</button>
+    <div>
+  
+    <div id= "getAgeDiv" style ="display: none;">
+        <hr>
+        <p>Returned patient resource: </p>
+        <p id="ptRes" > </p>
+        <hr>
+        <p>Assume that the returned patient resource is stored in a FHIR object patientRes. <br>Complete the pesudo code below to get the value of the birthdate of the patient, and create the logic for CDS<br>(The format should be Object.element)</p>
+        <div style ="background-color: lightgray;">
+            <p>If: </p>
+            <label for="getElem" style="display: inline-block;">patientRes</label>
+            <input type="text" id="getElem" name="getElem" style="display: inline-block;" required> 
+            <p style="display: inline-block;">is greater than 40</p>  
+            <p>Then:</p> 
+            <p>Display CDS</p>     
+        <button onclick = "getAge()" >Test</button>
+        </div>
+        <hr>
+    </div>
+
+
+    <div id = "riskFrame" style ="display: none; background-color: yellow;">
+        <p style="display: inline-block;"> Patient's age is: </p>
+        <p id="ptAge"  style="display: inline-block;"></p>   
+        <p>The discussion about screening for prostate cancer should take place at:</p>
+        <ul>
+            <li>Age 50 for men who are at average risk of prostate cancer and are expected to live at least 10 more years.
+            <li>Age 45 for men at high risk of developing prostate cancer. This includes African Americans and men who have a first-degree relative (father or brother) diagnosed with prostate cancer at an early age (younger than age 65).</li>
+            <li>Age 40 for men at even higher risk (those with more than one first-degree relative who had prostate cancer at an early age).</li>
+        </ul>
+        <p>After this discussion, men who want to be screened should get the prostate-specific antigen (PSA) blood test. The digital rectal exam (DRE) may also be done as a part of screening</p>
+    </div>
+
+
   </main>
   
   <footer>
@@ -27,14 +79,17 @@
   </footer>
   <script>
        //FHIR app
-      var patientResourse = {}
       function getPatient() {
           const client = FHIR.client("https://r3.smarthealthit.org");
           //alert(client)
-          client.request("Patient/2e27c71e-30c8-4ceb-8c1c-5641e066c0a4").then(response => {
-              //alert(JSON.stringify(response))
+          let pt = document.getElementById("getPt").value;
+          client.request("Patient/"+pt).then(response => {
               document.getElementById("ptRes").innerHTML = JSON.stringify(response) ;
-              patientResourse= response;
+              if (document.getElementById("ptRes").innerHTM != " "){
+                document.getElementById("getAgeDiv").style.display = "block";
+                document.getElementById("riskFrame").style.display = "none";
+              }
+              sessionStorage.setItem('patientResource', JSON.stringify(response));
               if (!response.ok) {
               throw new Error("HTTP error " + response.status);
               }
@@ -44,20 +99,52 @@
               //alert(data);
               })
               .catch(error => {
-              alert(error);
+              //alert(error);
               });
+      }
+
+      function getSecPt(){
+            document.getElementById("riskFrame").style.display = "none";
+            let emr = document.getElementById("getSecEmr").value
+            let pt = document.getElementById("getSecPt").value
+            fetch(emr+pt)
+            .then(response => response.json())
+            .then(data => {
+        // do something with the data
+            //alert(JSON.stringify(data));
+            document.getElementById("ptRes").innerHTML = JSON.stringify(data);
+            sessionStorage.setItem('patientResource', JSON.stringify(data));
+            })
+            .catch(error => {
+        // handle errors
+        console.error(error);
+     });
+
       }
       
       function getAge(){
-        // Assuming the FHIR resource is stored in a variable called "patientResource"
-        const birthDate = patientResource.birthDate;
-        const ageInMs = Date.now() - new Date(birthDate).getTime();
-        const ageInYears = ageInMs / 1000 / 60 / 60 / 24 / 365.25;
-        const age = Math.floor(ageInYears);
-        alert(age);
+        if (document.getElementById("getElem").value === ".birthDate"){
+            // Assuming the FHIR resource is stored in a variable called "patientResource"
+            //const patientResource= JSON.parse(document.getElementById("ptRes").innerHTML)
+            let patientResourceJ = sessionStorage.getItem('patientResource');
+            let patientResource = JSON.parse(patientResourceJ)
+            //alert(patientResource)
+            //alert(patientResource.birthDate)        
+            const birthDate = patientResource.birthDate;
+            const ageInMs = Date.now() - new Date(birthDate).getTime();
+            const ageInYears = ageInMs / 1000 / 60 / 60 / 24 / 365.25;
+            const age = Math.floor(ageInYears);
+            
+            if (age > 40){
+                document.getElementById("ptAge").innerHTML = age;
+                document.getElementById("riskFrame").style.display = "block";
+            }
+            //alert(age);
+        } else{
+            alert("tryagain");  
+        }
       }
 
   </script>
 </body>
 </html>
-
